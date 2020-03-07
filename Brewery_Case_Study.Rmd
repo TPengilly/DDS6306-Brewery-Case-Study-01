@@ -121,6 +121,9 @@ ggplot(map.df, aes(x=long,y=lat,group=group)) +
 
 ```
 
+# It can be seen above that there is an exceptionally high concentration of breweries in Colorado, with California and Michigan not far behind. Colorado is the microbrewing capital of the US because it was 'ground zero' for the microbrewing explosion.  Home to Coors, Colorado has had a long tradition of brewing, and many beer festivals, that primed it to take its position as the craft brewing capital of the US when home-brewing was legalized in 1979.
+
+# Other factors, such as brewing a distribution laws, are responsible for brewery concentration.  In  Michigan, brewers are allowed to sell their brews directly to customers if they produce less than 1,000 barrels annually, otherwise they must work with a distribution company, who often take up toa 30% cut of the profits.  This encourages the formation of many small breweries.
 
 ###############################################################################################################################################
 ############################################################ Question 2 #######################################################################
@@ -195,8 +198,28 @@ median_ibu = as.data.frame(median_ibu)
 
 # Determine which observation has maximum values and output the state
 median_abv$State[which.max(median_abv$medianABV)] # Kentucky
+median_abv$medianABV[which.max(median_abv$medianABV)]
+
 median_ibu$State[which.max(median_ibu$medianIBU)] # Delaware
+median_ibu$medianIBU[which.max(median_ibu$medianIBU)]
 median_data = merge(median_abv, median_ibu, by = 'State')
+```
+
+# This creates a bar chart for median ABV and IBU for each state.
+```{r}
+median_abv %>% ggplot(aes(x= reorder(State, median_abv$medianABV, fun = median), y = medianABV, fill = State)) + 
+  geom_bar(stat = 'identity') + 
+  coord_flip() + 
+  ggtitle('Median Beer Alcohol Content By State') + 
+  ylab('Alcohol Content') + 
+  xlab('State')
+
+median_ibu %>% ggplot(aes(x= reorder(State, median_ibu$medianIBU, fun = median), y = medianIBU, fill = State)) + 
+  geom_bar(stat = 'identity') + 
+  coord_flip() + 
+  ggtitle('Median Beer IBU  By State') + 
+  ylab('IBU Rating') + 
+  xlab('State')
 ```
 
 # This plots the median ABV and IBU by state on a heatmap for an easy-to-read summary of the data.
@@ -220,7 +243,7 @@ for (row in 1:nrow(median_data2)){
   median_data2$State[row] = state.name[which(state.abb == abb)]
 }
 
-median_data2$region <- tolower(NumBreweryMapData$State)
+median_data2$region <- tolower(median_data2$State)
 states <- map_data("state")
 map.df <- merge(states,median_data2, by="region", all.x=T)
 map.df <- map.df[order(map.df$order),]
@@ -245,22 +268,9 @@ ggplot(map.df, aes(x=long,y=lat,group=group)) +
   labs(fill = 'IBU Rating')
 ```
 
-# This creates a bar chart for median ABV and IBU for each state.
-```{r}
-median_abv %>% ggplot(aes(x= reorder(State, median_abv$medianABV, fun = median), y = medianABV, fill = State)) + 
-  geom_bar(stat = 'identity') + 
-  coord_flip() + 
-  ggtitle('Median Beer Alcohol Content By State') + 
-  ylab('Alcohol Content') + 
-  xlab('State')
+# The majority of the country has a median alcohol content of about 5.5% for beers, with notable exceptions being Kentucky (6.4%) and West Virginia (6.2%), and Utah (~4%). Utah has much stricter laws regulating alcohol due to the high concentration of Mormon's and their beliefs regarding alcohol. 
 
-median_ibu %>% ggplot(aes(x= reorder(State, median_ibu$medianIBU, fun = median), y = medianIBU, fill = State)) + 
-  geom_bar(stat = 'identity') + 
-  coord_flip() + 
-  ggtitle('Median Beer IBU  By State') + 
-  ylab('IBU Rating') + 
-  xlab('State')
-```
+# A rough national median IBU rating is between 30-40, with Delaware having the highest (60), and West Virginia close behind at 57.  Delaware and West Virginia are much higher than the rest of the nation because they have far fewer breweries than most states, but are following the national trend of brewing bitter IPA's and pale ales. The median bitterness rating is much lower in the midwest than elsewhere in the country.  This is due to the preference for ales over more bitter beer styles in this region.  We will discuss this later in our analysis.
 
 
 
@@ -277,9 +287,10 @@ median_ibu %>% ggplot(aes(x= reorder(State, median_ibu$medianIBU, fun = median),
 state_maxABV = dataset$State[which.max(dataset$ABV)]
 state_maxIBU = dataset$State[which.max(dataset$IBU)]
 state_maxABV # Colorado
+dataset$ABV[which.max(dataset$ABV)]
 state_maxIBU # Oregon
+dataset$IBU[which.max(dataset$IBU)]
 ```
-
 
 # This code creates a heatmap for the max ABV and IBU for beer in each state.
 ```{r}
@@ -304,7 +315,7 @@ for (row in 1:nrow(max_data2)){
   max_data2$State[row] = state.name[which(state.abb == abb)]
 }
 
-max_data2$region <- tolower(NumBreweryMapData$State)
+max_data2$region <- tolower(max_data2$State)
 states <- map_data("state")
 
 # Merge dataframes
@@ -331,8 +342,10 @@ ggplot(map.df, aes(x=long,y=lat,group=group)) +
   labs(fill = 'IBU Rating')
 ```
 
-
-
+# The state with the highest alcohol content beer is Colorado (12.8%) with Kentucky in second at 12.5%.  
+# The state with the  most bitter beer is Oregon (138 IBU) with Virginia in second at 135.  
+# It is interesting to note that Utah does not have the weakest maximum ABV beer given their alcohol laws, but that Missouri and Tennesse have the weakest maximum ABV beer.
+# Missouri and Tennessee also have the lowest maximum IBU indicating an aversion to bitter beer, or at least a weak microbrewing industry.
 
 
 ###############################################################################################################################################
@@ -361,11 +374,17 @@ popular_beers_tibble = count(dataset, Style)
 popular_beers_tibble = popular_beers_tibble %>% filter(popular_beers_tibble$n > 75)
 popular_beers = merge(dataset, popular_beers_tibble, by = 'Style', all.x = FALSE, all.y = TRUE)
 
-popular_beers %>% ggplot() + geom_histogram(aes(x = popular_beers$ABV, fill = Style)) + facet_wrap(popular_beers$Style) + theme(legend.position = 'none')
-popular_beers %>% ggplot() + geom_histogram(aes(x = popular_beers$IBU, fill = Style)) + facet_wrap(popular_beers$Style) + theme(legend.position = 'none')
+popular_beers %>% ggplot() + 
+  geom_histogram(aes(x = popular_beers$ABV * 100, fill = Style)) + 
+  facet_wrap(popular_beers$Style) + theme(legend.position = 'none') +
+  xlab('ABV (%)')
+popular_beers %>% ggplot() + geom_histogram(aes(x = popular_beers$IBU, fill = Style)) + 
+  facet_wrap(popular_beers$Style) + 
+  theme(legend.position = 'none') +
+  xlab('IBU Rating')
 ```
 
-
+# The most common ABV is about 5-5.5%, but there is a niche market for beers with higher ABV's in the range of 6-10%.  Since most people do not buy a beer because of its alcohol content, this is an interesting revelation that warrants further investigation.  The plots of popular beers show that many of the most popular beers have a bitterness rating well above the national median.  This relationship is explored further.
 
 
 
@@ -382,6 +401,9 @@ dataset %>% ggplot(aes(x = ABV, y = IBU)) +
   stat_smooth(method = 'lm', se = FALSE) +
   ggtitle("Relationship Between IBU and ABV") + theme(legend.position = 'none', plot.title = element_text(hjust = 0.5))
 ```
+
+# There does seem to be a general positive relationship between alcohol content and bitterness, but the divergeance from the model at higher ABV levels indicate that there are other factors at play. The beers were divided into IPAs and ales and the relationship was explored again.
+
 
 # This code explores the ABV-IBU relationship of specific beer styles (IPA's and Ales) to get more insights into the relationship, which appears more complicated than initially thought. The two styles analyzed display different relationships.
 ```{r}
@@ -401,7 +423,7 @@ ipa_ale_dataset %>% ggplot(aes(x = ABV, y = IBU, color = Style)) +
   stat_smooth(method = 'lm', se = FALSE)
 ```
 
-
+# When the beers were divided into IPAs and ales different relationships were noticed. While they both are positive, they are different enough to indicate that they may not be directly correlated, and that beer style may determine the relationship between ABV and IBU.
 
 
 
@@ -459,7 +481,8 @@ CM = confusionMatrix(table(test$Style,classifications))
 CM
 ```
 
-### We decided to try a different model, leave-one out cross validation, to get better results.  
+# This model had a very high accuracy of ~ 90%, but it may not be the best model.  We decided to try a leave-one out cross validation model to get better results.  
+
 
 # This code runs a Leave one out cross validation model over multiple data samples and k-values to determine the optimum K (k = 5 is optimum).  This model is similar to the previous one, but utilizes the entire dataset to train instead of 70% of the data. 
 ```{r}
@@ -482,6 +505,8 @@ classifications = knn.cv(ipa_ale_dataset[,c(7,8)], ipa_ale_dataset$Style, prob =
 CM = confusionMatrix(table(classifications, ipa_ale_dataset$Style))
 CM
 ```
+
+# This model performed slightly better than the previous, with an accuracy consistently above 90%.  The results of this model can now be visualized to gain insights from the data.
 
 # This creates a dataframe that stores the performance metrics of our KNN model, to be used to analyze the results.  It includes the model classifications, probabilities, the beer's true style, ABV, and IBU.
 ```{r}
@@ -513,6 +538,9 @@ model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Styl
 model_plot
 ```
 
+# The above plot visualizes the performance of the model. The model tends to guess that a beer is an IPA when the IBU rating is above ~ 55-60, and it is quite successful at doing so. It also tends to guess that a beer is an ale at alcohol contents below 4%, but that is the only insight it provides regarding ABV.  This is clarified and further explored below.
+
+
 # Create a 3D plot Comparing ABV and IBU to the probability of being an Ale colored by the models prediction accuracy. This confirms that the probability of being an Ale is not affected by ABV, but shows a significant visual correlation between IBU and probability of being an Ale. The model errors are fairly evenly distributed across IBU and ABV indicating a complex relationship that is not fully captured by these two variables.
 ```{r}
 library(plotly)
@@ -526,6 +554,8 @@ model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Styl
 model_plot
 ```
 
+# The probability of being an ale decreases as the the IBU rating increases indicating correlation.  No such correlation exists with ABV.
+
 # Create a 2D plot of ABV vs IBU colored by model correctness.  This shows that most errors occur in a middle IBU range of ~50-60, indicating that this range may be thought of as a boundary between IPA's and ales.
 ```{r}
 class_df %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) + 
@@ -536,7 +566,7 @@ class_df %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) +
 ```
 
 
-# Create scatterplots of probability of being an ale vs ABV and probability of being an ale vs IBU colored by the beer's style.  This confirms that IBU and the probability of being an ale are correlated, while ABV and probability of being an ale are not.
+# Create 2D scatterplots of probability of being an ale vs ABV and probability of being an ale vs IBU colored by the beer's style.  This confirms that IBU and the probability of being an ale are correlated, while ABV and probability of being an ale are not.
 ```{r}
 class_df$`Ale Probability` = class_df$AleProb * 100
 
@@ -557,9 +587,7 @@ class_df %>% ggplot(aes(x = IBU, y = `Ale Probability`, color = Truth)) +
 
 
 
-
-
-### Create a logistic regression model for classification in order to determine statistical significance of relationships.
+# A logistic regression classifier was trained in order to determine the statistical significance of the relationships between beer style and IBU and ABV
 
 # Create training and test sets
 ```{r}
@@ -586,6 +614,8 @@ fitted.results = ifelse(fitted.results > 0.5, 'IPA', 'Ale')
 misclass_error = mean(fitted.results != ipa_ale_test$Style)
 print(paste('Accuracy is ', 1 - misclass_error))
 ```
+
+# This model is less accurate than the previous cross validated model, but it has the benefit of providing hard statistical evidence to support our suspicions: that IBU is correlated with beer style, and ABV is not significantly correlated.
 
 
 # This plots the performance of the logistic regression model based on a beers ABV and IBU.
@@ -623,7 +653,7 @@ logmodel_plot <- logmodel_plot %>% layout(title = 'Logistic Regression Model Per
 logmodel_plot
 ```
 
-
+# To summarize: the difference between IPAs and ales are that IPAs tend to have a higher IBU rating than ales, while both styles of beers have the same range of ABVs.  This was confirmed with multiple models.
 
 
 ####################################################################################################################################################
@@ -631,7 +661,8 @@ logmodel_plot
 ####################################################################################################################################################
 
 #### 9. Find one other useful piece of information in the data. Convince them why it's important and back it up.
-# We will determine which beer styles are popular across all 50 states.
+
+# We will determine which beer styles are popular across all 50 states. The most brewed beer in each state will be determined and plotted.  This will give inight into which beers are in demand by location.  This information can be very valuable for marketing or brewing purposes.  The beer styles were condensed into 8 distinct groups that are sufficiently different to warrant its own grouping.
 
 # This code condenses beer styles into a few common types, such as: IPA, Ale, Pale Ale, Lager, Stout, Pilsner, Wheat Beer, and Porter.
 ```{r}
@@ -753,6 +784,15 @@ ggplot(map.df, aes(x=long,y=lat,group=group)) +
   scale_fill_manual(values = c('red2', 'orange2', 'chartreuse3', 'blue3', 'cyan1', 'orchid', 'springgreen2', 'turquoise3'), drop = FALSE)
 ```
 
+# The most noticeable trend is the popularity of ales in the midwest, and of IPAs on the west coast and in New England.
 
 
+###############################################################################################################################################
+################################################################ Conclusion ###################################################################
+###############################################################################################################################################
 
+# There were many valuable insights gained from the data provided by Budweiser.  The distribution of breweries across the country is affected both by population demographics and the legal aspects of alcohol brewing and distribution. The strength of beers is also to some extent determined by law, and local preference, while the bitterness oflocal beers are determined almost wholly by local preference and new trends.  These trends have been determined and summarized above, which can aid in targeted marketing for specific beers, or for consideration in creating new brews.  A definite distinction was found between IPAs and ales, based solely on IBU rating.  While IPAs tend to have a higher IBU rating than other ales, there is no such distinction in terms of alcohol content.  
+
+###############################################################################################################################################
+###############################################################################################################################################
+###############################################################################################################################################

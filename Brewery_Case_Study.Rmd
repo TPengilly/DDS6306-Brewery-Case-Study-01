@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ################################################################ Introduction #################################################################
 ###############################################################################################################################################
 
-# Our goal is to provide any interesting or useful insights gained from the analysis of beer and brewery data provided by Budweiser.  In exploring the beer data we will analyze variables including ABV (alcohol content by volume), IBU (International Bitterness Units), the brewer, brewery location, beer style, and the volume in ounces of the beer of interest in order to find interesting correlations.
+# Our goal is to provide any interesting or useful insights gained from the analysis of the beer and brewery data provided by Budweiser.  In exploring the beer data we will analyze variables including ABV (alcohol content by volume), IBU (International Bitterness Units), the brewer, brewery location, beer style, and the volume in ounces of the beer of interest in order to find interesting correlations. We have found numerous insights about beer preferences across the country and the differences between the various beer styles using both KNN and logistic regression classifiers. Our findings are presented below.
 
 ###############################################################################################################################################
 ###############################################################################################################################################

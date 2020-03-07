@@ -10,18 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ###############################################################################################################################################
-
-# Doing Data Science: Case Study 1: Brewery Case Study
-# The code in this file will conduct EDA on the Beers.csv and Breweries.csv files provided in order to answer the questions posed in the Case Study 01 document.
-# Each chunk of code should be clearly and fully explained in a sentence or two before the code chunk.
-
-###############################################################################################################################################
-
-
-
-
-
-###############################################################################################################################################
 ################################################################ Introduction #################################################################
 ###############################################################################################################################################
 
@@ -85,13 +73,16 @@ library(ggplot2)
 library(maps)
 library(dplyr)
 library(mapproj)
+
+# Create dataframe with state information and change column names to merge
 new_brewery_data = brewery_data
-lookup = data.frame(abb = state.abb, State = state.name)    #makes a data frame with State name and abbreviation. (from one of libraries)
-colnames(new_brewery_data)[4] = "abb"    # Change Column Name so we have matching keys b/t datasets
-brewery_data2 = merge(new_brewery_data,lookup, by ="abb", all.x = TRUE, no.dups = F)    # make one dataset with state names and abb
+lookup = data.frame(abb = state.abb, State = state.name)
+colnames(new_brewery_data)[4] = "abb"
+brewery_data2 = merge(new_brewery_data,lookup, by ="abb", all.x = TRUE, no.dups = F)
 brewery_data2 = brewery_data2[!brewery_data2$abb == ' DC',]
 levels(brewery_data2$State) = levels(lookup$State)
 levels(lookup$abb) = levels(brewery_data2$abb)
+
 
 for (row in 1:nrow(brewery_data2)){
   abb = as.character(brewery_data2$abb[row])
@@ -99,15 +90,17 @@ for (row in 1:nrow(brewery_data2)){
   brewery_data2$State[row] = state.name[which(state.abb == abb)]
 }
 
-NumBreweryMapData = count(brewery_data2, State)    #count up the occurance of each state. 
-colnames(NumBreweryMapData)[2] = "Breweries"    #change "n" to "Acuspikes"
-NumBreweryMapData$region <- tolower(NumBreweryMapData$State)    # renamed state to region to merge with dataframe of map data later
+# Count breweries in each state and manipulate variables to match states dataframe
+NumBreweryMapData = count(brewery_data2, State)
+colnames(NumBreweryMapData)[2] = "Breweries"
+NumBreweryMapData$region <- tolower(NumBreweryMapData$State)
 NumBreweryMapData2 = NumBreweryMapData[-1]
-states <- map_data("state")    # This creates the visual map of states boundaries, etc
+states <- map_data("state")
 
 map.df <- merge(states,NumBreweryMapData2, by="region", all.x=T)
 map.df <- map.df[order(map.df$order),]
 
+# Get rough location of middle of each state to plot number of breweries overtop of the states
 tibble = map.df %>% group_by(region) %>% summarise(midlat = mean(c(max(lat), min(lat))), midlong = mean(c(max(long), min(long))))
 for (row in 1:nrow(map.df)){
   region = map.df$region[row]
@@ -213,9 +206,10 @@ library(maps)
 library(dplyr)
 library(mapproj)
 
-lookup = data.frame(abb = state.abb, State = state.name) #makes a data frame with State name and abbreviation. (from one of libraries)
-colnames(median_data)[1] = "abb" # Change Column Name so we have matching keys b/t datasets
-median_data2 = merge(median_data,lookup, by ="abb", all.x = TRUE, no.dups = F) # make one dataset with state names and abb
+# Create dataframe with state information and change column names to merge
+lookup = data.frame(abb = state.abb, State = state.name)
+colnames(median_data)[1] = "abb"
+median_data2 = merge(median_data,lookup, by ="abb", all.x = TRUE, no.dups = F)
 median_data2 = median_data2[!median_data2$abb == ' DC',]
 levels(median_data2$State) = levels(lookup$State)
 levels(lookup$abb) = levels(median_data2$abb)
@@ -226,23 +220,10 @@ for (row in 1:nrow(median_data2)){
   median_data2$State[row] = state.name[which(state.abb == abb)]
 }
 
-median_data2$region <- tolower(NumBreweryMapData$State) # renamed state to region to merge with dataframe of map data later
-
-states <- map_data("state") # This creates the visual map of states boundaries, etc
-# Heat maps require all data to be in single data frame, from states boundaries ^ to counts (sales) for states
+median_data2$region <- tolower(NumBreweryMapData$State)
+states <- map_data("state")
 map.df <- merge(states,median_data2, by="region", all.x=T)
 map.df <- map.df[order(map.df$order),]
-
-tibble = map.df %>% group_by(region) %>% summarise(midlat = mean(c(max(lat), min(lat))), midlong = mean(c(max(long), min(long))))
-for (row in 1:nrow(map.df)){
-  region = map.df$region[row]
-  midlat = tibble[tibble$region == region,]$midlat
-  midlong = tibble[tibble$region == region,]$midlong
-  map.df$midlat[row] = midlat
-  map.df$midlong[row] = midlong
-}
-
-#  Convert ABV to percent
 map.df$Percent = map.df$medianABV * 100
 
 ggplot(map.df, aes(x=long,y=lat,group=group)) + 
@@ -309,9 +290,10 @@ max_ibu = dataset %>% group_by(State) %>% summarize(maxIBU = max(IBU))
 max_ibu = as.data.frame(max_ibu)
 max_data = merge(max_abv, max_ibu, by = 'State')
 
-lookup = data.frame(abb = state.abb, State = state.name) #makes a data frame with State name and abbreviation. (from one of libraries)
-colnames(max_data)[1] = "abb" # Change Column Name so we have matching keys b/t datasets
-max_data2 = merge(max_data,lookup, by ="abb", all.x = TRUE, no.dups = F) # make one dataset with state names and abb
+# Manipulate variable names to enable merging dataframes
+lookup = data.frame(abb = state.abb, State = state.name)
+colnames(max_data)[1] = "abb"
+max_data2 = merge(max_data,lookup, by ="abb", all.x = TRUE, no.dups = F)
 max_data2 = max_data2[!max_data2$abb == ' DC',]
 levels(max_data2$State) = levels(lookup$State)
 levels(lookup$abb) = levels(max_data2$abb)
@@ -322,22 +304,12 @@ for (row in 1:nrow(max_data2)){
   max_data2$State[row] = state.name[which(state.abb == abb)]
 }
 
-max_data2$region <- tolower(NumBreweryMapData$State) # renamed state to region to merge with dataframe of map data later
+max_data2$region <- tolower(NumBreweryMapData$State)
+states <- map_data("state")
 
-states <- map_data("state") # This creates the visual map of states boundaries, etc
-
+# Merge dataframes
 map.df <- merge(states,max_data2, by="region", all.x=T)
 map.df <- map.df[order(map.df$order),]
-
-tibble = map.df %>% group_by(region) %>% summarise(midlat = mean(c(max(lat), min(lat))), midlong = mean(c(max(long), min(long))))
-for (row in 1:nrow(map.df)){
-  region = map.df$region[row]
-  midlat = tibble[tibble$region == region,]$midlat
-  midlong = tibble[tibble$region == region,]$midlong
-  map.df$midlat[row] = midlat
-  map.df$midlong[row] = midlong
-}
-
 map.df$Percent = map.df$maxABV * 100
 
 ggplot(map.df, aes(x=long,y=lat,group=group)) + 
@@ -369,7 +341,7 @@ ggplot(map.df, aes(x=long,y=lat,group=group)) +
 
 ###6. Comment on the summary statistics and distribution of ABV
 
-# This will summarize the statistics of ABV by beer
+# This will calculate the summary statistics of ABV for all beers
 ```{r}
 # Get summary statistics
 summary(dataset$ABV)
@@ -421,8 +393,12 @@ ipa_dataset$Style = c('IPA')
 ale_dataset$Style = c('Ale')
 ipa_ale_dataset = rbind(ipa_dataset, ale_dataset)
 
-ipa_ale_dataset %>% ggplot(aes(x = ABV, y = IBU, color = Style))  + geom_point(position = 'jitter') + ggtitle('Alcohol Content vs Bitterness') + scale_color_manual(values = c('red', 'blue')) + theme(plot.title = element_text(hjust = 0.5))
-
+ipa_ale_dataset %>% ggplot(aes(x = ABV, y = IBU, color = Style)) + 
+  geom_point(position = 'jitter') + 
+  ggtitle('Alcohol Content vs Bitterness') + 
+  scale_color_manual(values = c('red', 'blue')) + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  stat_smooth(method = 'lm', se = FALSE)
 ```
 
 
@@ -435,9 +411,9 @@ ipa_ale_dataset %>% ggplot(aes(x = ABV, y = IBU, color = Style))  + geom_point(p
 
 #### 8. Investigate the difference with respect to IBU and ABV between IPAs and all other Ales (excluding IPA's). Use KNN. May supplement with other approaches.
 
-# This code creates a subset of the data containing only IPA's and all other Ales combined in a common 'Ale' group (duplicated from above), then splits this subset into a training set and a test set.
+# This code creates a subset of the data containing only IPA's and all other Ales combined in a common 'Ale' group, then splits this subset into a training set and a test set.
 ```{r}
-# Need to filter into two groups: IPA and Ale
+# Filter into two groups: IPA and Ale
 ipa_dataset = dataset %>% filter(grepl('.*IPA.*', dataset$Style))
 ale_dataset = dataset %>% filter(grepl('.*Ale.*', dataset$Style))
 ale_dataset = ale_dataset %>% filter(!grepl('.*IPA.*', ale_dataset$Style))
@@ -451,7 +427,7 @@ train = ipa_ale_dataset[trainIndices,]
 test = ipa_ale_dataset[-trainIndices,]
 ```
 
-# This code iterates through multiple dataset samples and k-values to estimate the optimum K-value (k = 5). The results of the iteration are plotted below.
+# This code iterates through multiple dataset samples and k-values to estimate the optimum K-value (k = 5). This will allow us to fit the best possible model for the given data.
 ```{r}
 iterations = 100
 numks = 30
@@ -525,6 +501,7 @@ class_df$AleProb = ifelse(class_df$Classification == 'Ale', class_df$Probability
 ```
 
 # Create a 3D plot showing the models performance as color with respect to the true beer style on the z-axis.  
+
 #This plot shows that the model makes a fair amount of errors across all ABV values, indicating low correlation between style and ABV.  It also shows a significant boundary in the IBU range of ~ 40-60, above or below which it is highly accurate in predicting the beer style, indicating a possible correlation between IBU and beer style.  This is explored further.
 ```{r}
 library(plotly)
@@ -549,26 +526,40 @@ model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Styl
 model_plot
 ```
 
-# Create a 2D plot of ABV vs IBU colored by model correctness 
+# Create a 2D plot of ABV vs IBU colored by model correctness.  This shows that most errors occur in a middle IBU range of ~50-60, indicating that this range may be thought of as a boundary between IPA's and ales.
 ```{r}
-class_df %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) + geom_point(position = 'jitter') + ggtitle('KNN Model Performance') +
-  scale_color_manual(values = c('red', 'blue')) + theme(plot.title = element_text(hjust = 0.5))
+class_df %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) + 
+  geom_point(position = 'jitter') + 
+  ggtitle('KNN Model Performance') +
+  scale_color_manual('Model Performance', values = c('red', 'blue')) + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
-# Create scatterplots of probability of being an ale vs ABV and probability of being an ale vs IBU colored by model correctness
+# Create scatterplots of probability of being an ale vs ABV and probability of being an ale vs IBU colored by the beer's style.  This confirms that IBU and the probability of being an ale are correlated, while ABV and probability of being an ale are not.
 ```{r}
 class_df$`Ale Probability` = class_df$AleProb * 100
-class_df %>% ggplot(aes(x = ABV, y = `Ale Probability`, color = Truth))  + geom_point(position = 'jitter') + ggtitle('Predicted Style Probabilities (ABV)') + scale_color_manual(values = c('red', 'blue')) + ylab('Probability of Being an Ale (%)') + theme(plot.title = element_text(hjust = 0.5))
-class_df %>% ggplot(aes(x = IBU, y = `Ale Probability`, color = Truth))  + geom_point(position = 'jitter') + ggtitle('Predicted Style Probabilities (IBU)') + scale_color_manual(values = c('red', 'blue')) + ylab('Probability of Being an Ale (%)') + theme(plot.title = element_text(hjust = 0.5))
 
+class_df %>% ggplot(aes(x = ABV, y = `Ale Probability`, color = Truth)) + 
+  geom_point(position = 'jitter') + 
+  ggtitle('Predicted Style Probabilities (ABV)') + 
+  scale_color_manual('True Style', values = c('red', 'blue')) + 
+  ylab('Probability of Being an Ale (%)') + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+class_df %>% ggplot(aes(x = IBU, y = `Ale Probability`, color = Truth)) + 
+  geom_point(position = 'jitter') + 
+  ggtitle('Predicted Style Probabilities (IBU)') + 
+  scale_color_manual('True Style', values = c('red', 'blue')) + 
+  ylab('Probability of Being an Ale (%)') + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
 
 
 
-### Create a logistic regression model for classification in order to determine statistical significance of relationships. ( Include K-fold validation later)
+### Create a logistic regression model for classification in order to determine statistical significance of relationships.
 
 # Create training and test sets
 ```{r}
@@ -580,7 +571,6 @@ splitpercent = .70
 trainIndices = sample(1:dim(ipa_ale_dataset)[1], round(splitpercent * dim(ipa_ale_dataset)[1]))
 ipa_ale_train = ipa_ale_dataset[trainIndices,]
 ipa_ale_test = ipa_ale_dataset[-trainIndices,]
-
 ```
 
 # Train and test logistic regression model and output its performance metrics. This model is capable of ascertaining the statistical significance of the relationships.  It confirms our intuitions that IBU is significantly correlated to style, while ABV is not.
@@ -598,34 +588,17 @@ print(paste('Accuracy is ', 1 - misclass_error))
 ```
 
 
-
-
-###################### NEEDS WORK ############################## IF USED #######################
-# Train and test cross validated logistic regression model and output its performance metrics. This model is capable of ascertaining the statistical significance of the relationships.  It confirms our intuitions that IBU is significantly correlated to style, while ABV is not.
-```{r}
-library(boot)
-cv_logistic_regression_model = cv.glm(data = ipa_ale_dataset, glmfit = logistic_regression_model, K = 10)
-summary(cv_logistic_regression_model)
-
-cv_logistic_regression_model$delta
-```
-
-########################################################
-
-
-
-
-
-
-#################################################### KEEP THIS ######################################################################
-
-# Plot the performance of the logistic regression model
+# This plots the performance of the logistic regression model based on a beers ABV and IBU.
 ```{r}
 # Create dataframe of test set and model results
 ipa_ale_test$Predicted_Style = fitted.results
 ipa_ale_test$Correct = ifelse(ipa_ale_test$Style == ipa_ale_test$Predicted_Style, 'Correct Prediction', 'Incorrect Prediction')
 
-ipa_ale_test %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) + geom_point(position = 'jitter') + ggtitle('Logistic Model Performance') + scale_color_manual(values = c('blue', 'red'))
+ipa_ale_test %>% ggplot(aes(x = IBU, y = ABV, color = Correct)) + 
+  geom_point(position = 'jitter') + 
+  ggtitle('Logistic Model Performance') + 
+  scale_color_manual('Model Performance', values = c('blue', 'red')) +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 # Plot 3D results of model performance with true style as the z axis.  This plot shows a definitive boundary of IBU = ~55 above which is IPA, below which is Ale.  No such boundary exists for ABV.
@@ -639,7 +612,7 @@ logmodel_plot <- logmodel_plot %>% layout(title = 'Logistic Regression Model Per
 logmodel_plot
 ```
 
-# Plot 3D results of model performance with IPA Probability as the z axis.  THis further confirms our intuition.
+# Plot 3D results of model performance with IPA Probability as the z axis.  This further confirms our intuition.
 ```{r}
 library(plotly)
 logmodel_plot <- plot_ly(ipa_ale_test, x = ~IBU, y = ~ABV, z = ~Prob_IPA, color = ~Correct, colors = c('blue', 'red'))
@@ -660,34 +633,32 @@ logmodel_plot
 #### 9. Find one other useful piece of information in the data. Convince them why it's important and back it up.
 # We will determine which beer styles are popular across all 50 states.
 
-# This code condenses beer styles into a few common types, such as: IPA, Ale, Pale Ale, Lager, Stout, Pilsner, Witbier, and Porter
+# This code condenses beer styles into a few common types, such as: IPA, Ale, Pale Ale, Lager, Stout, Pilsner, Wheat Beer, and Porter.
 ```{r}
-# Need to filter into two groups: IPA and Ale
+# Filter into multiple groups
 ipa_dataset = dataset %>% filter(grepl('.*IPA.*', dataset$Style))
-
+wheat_dataset = dataset %>% filter(grepl('.*Wheat.*', dataset$Style) | grepl('.*Hefeweizen.*', dataset$Style) | grepl('.*Witbier.*', dataset$Style))
 ale_dataset = dataset %>% filter(grepl('.* Ale.*', dataset$Style))
 ale_dataset = ale_dataset %>% filter(!grepl('.*IPA.*', ale_dataset$Style))
 ale_dataset = ale_dataset %>% filter(!grepl('.* Pale.*', ale_dataset$Style))
-
+ale_dataset = ale_dataset %>% filter(!grepl('.*Wheat*', ale_dataset$Style))
 pale_ale_dataset = dataset %>% filter(grepl('.* Pale.*', dataset$Style))
 pale_ale_dataset = pale_ale_dataset %>% filter(!grepl('.*IPA.*', pale_ale_dataset$Style))
-
 lager_dataset = dataset %>% filter(grepl('.*Lager.*', dataset$Style))
 stout_dataset = dataset %>% filter(grepl('.*Stout.*', dataset$Style))
 pilsner_dataset = dataset %>% filter(grepl('.*Pilsner.*', dataset$Style))
-witbier_data = dataset %>% filter(grepl('.*Witbier.*', dataset$Style))
 porter_data = dataset %>% filter(grepl('.*Porter.*', dataset$Style))
 
 ipa_dataset$Style = c('IPA')
-ale_dataset$Style = c('Ale')
+ale_no_wheat$Style = c('Ale')
 pale_ale_dataset$Style = c('Pale Ale')
 lager_dataset$Style = c('Lager')
 stout_dataset$Style = c('Stout')
 pilsner_dataset$Style = c('Pilsner')
-witbier_data$Style = c('Witbier')
+wheat_dataset$Style = c('Wheat Beer')
 porter_data$Style = c('Porter')
 
-styled_dataset = rbind(ipa_dataset, ale_dataset, pale_ale_dataset, lager_dataset, stout_dataset, pilsner_dataset, witbier_data, porter_data)
+styled_dataset = rbind(ipa_dataset, ale_no_wheat, pale_ale_dataset, lager_dataset, stout_dataset, pilsner_dataset, wheat_dataset, porter_data)
 styled_dataset = styled_dataset[order(styled_dataset$State),]
 styled_dataset$Style = as.factor(styled_dataset$Style)
 styled_dataset$State = as.factor(styled_dataset$State)
@@ -700,6 +671,9 @@ beer_counts = beer_counts[with(beer_counts, order(beer_counts$State, -beer_count
 
 beer_count_spread = spread(beer_counts, Style, n)
 beer_count_spread[is.na(beer_count_spread)] = 0
+
+# Save the data for dc before removing the DC observations. Necessary for heat map to work as written
+beer_counts_dc = beer_counts
 beer_counts = subset(beer_counts, beer_counts$State != ' DC')
 
 row = 1
@@ -720,7 +694,6 @@ levels(favorites$Style) = faclevels
 
 row  =1
 faverow = 1
-
 for (row in 1:nrow(beer_counts)) {
   state = beer_counts$State[row]
   style = beer_counts$Style[row]
@@ -742,18 +715,12 @@ library(maps)
 library(dplyr)
 library(mapproj)
 
-lookup = data.frame(abb = state.abb, State = state.name) #makes a data frame with State name and abbreviation. (from one of libraries)
-colnames(favorites)[1] = "abb" # Change Column Name so we have matching keys b/t datasets
-favorites2 = merge(favorites,lookup, by ="abb", all.x = TRUE, no.dups = F) # make one dataset with state names and abb
+# Create a dataframe containing state information and manipulate variables to merge dataframes later
+lookup = data.frame(abb = state.abb, State = state.name)
+colnames(favorites)[1] = "abb"
+favorites2 = merge(favorites,lookup, by ="abb", all.x = TRUE, no.dups = F)
 levels(favorites2$State) = levels(lookup$State)
 levels(lookup$abb) = levels(favorites2$abb)
-
-#### Trying to fit this in
-#favorites2 = favorites2[!brewery_data2$abb == ' DC',]
-#levels(favorites2$State) = levels(lookup$State)
-#levels(lookup$abb) = levels(favorites2$abb)
-
-#####
 
 for (row in 1:nrow(favorites2)){
   abb = as.character(favorites2$abb[row])
@@ -761,409 +728,31 @@ for (row in 1:nrow(favorites2)){
   favorites2$State[row] = state.name[which(state.abb == abb)]
 }
 
-favorites2$region <- tolower(favorites2$State) # renamed state to region to merge with dataframe of map data later
+favorites2$region <- tolower(favorites2$State)
+states <- map_data("state")
 
-states <- map_data("state") # This creates the visual map of states boundaries, etc
-# Heat maps require all data to be in single data frame, from states boundaries ^ to counts (sales) for states
 map.df <- merge(states,favorites2, by="region", all.x=T)
 map.df <- map.df[order(map.df$order),]
+map.df$region <- as.factor(map.df$region)
 
+row = 1
+for (row in 1:nrow(map.df)) {
+  if (map.df$region[row] == 'district of columbia') {
+  map.df$Style[row] = 'Ale'
+  row = row + 1
+  }
+}
 
+# Plot the heatmap
 ggplot(map.df, aes(x=long,y=lat,group=group)) + 
   geom_polygon(aes(fill=Style)) +
   geom_path() + 
   ggtitle('Most Brewed Beer in Each State') +  
-  coord_map() + theme(plot.title = element_text(hjust = 0.5))
-
+  coord_map() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c('red2', 'orange2', 'chartreuse3', 'blue3', 'cyan1', 'orchid', 'springgreen2', 'turquoise3'), drop = FALSE)
 ```
 
 
 
-
-
-# Check out wheat beers
-```{r}
-wheat_dataset = dataset %>% filter(grepl('.*Wheat.*', dataset$Style) | grepl('.*Hefeweizen.*', dataset$Style) | grepl('.*Witbier.*', dataset$Style))
-# Reset ale dataset
-ale_dataset = dataset %>% filter(grepl('.* Ale.*', dataset$Style))
-ale_dataset = ale_dataset %>% filter(!grepl('.*IPA.*', ale_dataset$Style))
-ale_dataset = ale_dataset %>% filter(!grepl('.* Pale.*', ale_dataset$Style))
-
-ale_no_wheat = ale_dataset %>% filter(!grepl('.*Wheat*', ale_dataset$Style))
-```
-
-
-
-
-
-
-
-
-
-# Get ale data set
-```{r}
-ale_dataset = dataset %>% filter(grepl('.* Ale.*', dataset$Style))
-ale_dataset = ale_dataset %>% filter(!grepl('.*IPA.*', ale_dataset$Style))
-ale_dataset = ale_dataset %>% filter(!grepl('.* Pale.*', ale_dataset$Style))
-ale_dataset = ale_dataset %>% filter(!grepl('.* Red.*', ale_dataset$Style))
-ale_dataset$Style = as.factor(ale_dataset$Style)
-```
-
-
-
-
-
-
-
-
-
-
-### Is there a relationship between the number of beers of a given style and their ABV and/or IBU
-# Create a dataframe that contains the count for each beer style
-```{r}
-tally_df = dataset %>% group_by(Style) %>% tally()
-tally_df = merge(dataset, tally_df, by = 'Style', all.x = TRUE, all.y = FALSE)
-```
-
-# Split the data into training and test sets
-```{r}
-splitpercent = .70
-trainIndices = sample(1:dim(tally_df)[1], round(splitpercent * dim(tally_df)[1]))
-lm_train = tally_df[trainIndices,]
-lm_test = tally_df[-trainIndices,]
-```
-
-
-# Create a linear model that predicts the style count using ABV and IBU
-```{r}
-linear_model = lm(n ~ ABV + IBU , data = lm_train)
-summary(linear_model)
-```
-
-
-# Test the linear model
-```{r}
-linear_results = predict(linear_model, subset(lm_test, select = c(8,9)), type = 'response')
-lm_test$Predicted_n = linear_results
-lm_test$Model_resid = lm_test$n - lm_test$Predicted_n
-
-lm_plot <- plot_ly(lm_test, x = ~IBU, y = ~ABV, z = ~n, color = ~Style) 
-lm_plot
-```
-
-
-
-
-
-
-
-
-
-
-################# FAILURES BELOW ######################
-
-
-
-
-
-
-
-
-
-
-# Create a 2D Scatter plot of ABV vs IBU colored by model Correctness with a 50% Probability contour line added
-```{r}
-x <- seq(min(class_df$IBU), max(class_df$IBU), length.out=119)
-y <- seq(min(class_df$ABV), max(class_df$ABV), length.out=13)
-pr <-data.frame(x = rep(x, length(y)), y = rep(y, each = length(x)), z = as.vector(class_df$AleProb))
-
-
-class_df %>% ggplot(aes(x = class_df$IBU, y = class_df$ABV, color = class_df$Correct)) + geom_point(position = 'jitter') + ggtitle('Model Decision Boundary') + scale_color_manual(values = c('red', 'blue')) + geom_contour(data = pr, aes(x = x, y = y, z = z), breaks = c(0, .5))
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Create a plot that includes a decision boundary
-```{r}
-class_df$Correct_Numeric = ifelse(class_df$Correct == TRUE, 1, 0)
-class_df$Truth_Numeric = ifelse(class_df$Truth == 'Ale', 1, 0)
-class_df$AleProb = ifelse(class_df$Classification == 'Ale', class_df$Probability, 1 - class_df$Probability)
-
-graph_resolution = 0.005
-axis_x = seq(min(ipa_ale_dataset$ABV), max(ipa_ale_dataset$ABV), by = graph_resolution)
-axis_y = seq(min(ipa_ale_dataset$IBU), max(ipa_ale_dataset$IBU), by = graph_resolution*1800)
-
-contour(x= axis_x, y = axis_y, z = as.matrix(class_df), levels = 0.5, col = 'grey', lwd = 2)
-
-
-
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~AleProb, color = ~Truth, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Beer Style Probability', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'Probability of Being an Ale')))
-
-model_plot  
-
-
-```
-
-
-# Create a plot that includes a decision boundary
-```{r}
-class_df$Correct_Numeric = ifelse(class_df$Correct == TRUE, 1, 0)
-class_df$Truth_Numeric = ifelse(class_df$Truth == 'Ale', 1, 0)
-ale_df = class_df[class_df$Truth == 'Ale',]
-ipa_df = class_df[class_df$Truth == 'IPA',]
-
-ale_model = lm(data = ale_df, formula = Correct_Numeric ~ ABV + IBU)
-ipa_model = lm(data = ipa_df, formula = Correct_Numeric ~ ABV + IBU)
-ale_vals = predict(ale_model, newdata = ale_df)
-ipa_vals = predict(ipa_model, newdata = ipa_df)
-ale_vec = c(1)
-ipa_vec = c(0)
-ale_model_df = as.data.frame(cbind(ale_vals, ale_vec))
-ipa_model_df = as.data.frame(cbind(ipa_vals, ipa_vec))
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~Truth_Numeric, color = ~Correct, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Style', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'True Style')))
-model_plot <- model_plot %>% plot_ly(data = class_df,z = as.matrix(class_df$Probability))
-model_plot <- model_plot %>% add_surface()
-model_plot  
-  
-model_plot <- model_plot %>% add_lines(x = ~ABV, y = ~IBU, z = ~as.matrix(ale_model_df$ale_vals, color = 'black', width = 3))
-
-```
-
-
-
-
-
-
-graph_resolution = .01
-axis_x = seq(min(ipa_ale_dataset$ABV), max(ipa_ale_dataset$ABV), by = graph_resolution)
-axis_y = seq(min(ipa_ale_dataset$IBU), max(ipa_ale_dataset$IBU), by = graph_resolution)
-
-class_surface = expand.grid(ABV = axis_x, IBU = axis_y, KEEP.OUT.ATTRS = F)
-class_surface$Style = predict.lm(model, newdata = class_surface)
-class_surface <- acast(class_surface, ABV ~ IBU, value.var = "Style")
-
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~Truth_Numeric, color = ~Correct, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Style', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'True Style')))
-#model_plot <- add_trace(p = model_plot, z = class_surface, x = axis_x, y = axis_y, type = 'surface')
-
-
-
-```{r}
-### This creates a surface
-graph_resolution = .01
-
-axis_x = seq(min(ipa_ale_dataset$ABV), max(ipa_ale_dataset$ABV), by = graph_resolution)
-axis_y = seq(min(ipa_ale_dataset$IBU), max(ipa_ale_dataset$IBU), by = graph_resolution)
-
-class_surface = expand.grid(ABV = axis_x, IBU = axis_y, KEEP.OUT.ATTRS = F)
-class_surface$Style = predict.lm(model, newdata = class_surface)
-class_surface <- acast(class_surface, ABV ~ IBU, value.var = "Style")
-
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~Truth, color = ~Correct, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Style', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'True Style')))
-#model_plot <- add_trace(p = model_plot, z = class_surface, x = axis_x, y = axis_y, type = 'surface')
-########
-model_plot
-```
-
-
-abv = unique(class_df$ABV)
-ibu = unique(class_df$IBU)
-
-
-
-grid <- with(class_df, expand.grid(abv, ibu))
-prob = attr(classifications, 'prob')
-prob <- ifelse(classifications == '1', prob, 1 - prob)
-prob_matrix = matrix(prob, nrow = length(abv), ncol = length(ibu))
-
-contour(class_df$ABV, class_df$IBU, prob_matrix, levels = 0.5)
-
-
-```{r}
-classes.grid = knn.cv(class_df, grid, classifications, k = 5, prob = T)
-prob.grid <- attr(classes.grid, 'prob')
-prob.grid <- ifelse(classes.grid == 'IPA', prob.grid, 1 - prob.grid)
-
-# Plot boundary
-contour(x = 0:0.1, y = 0:140, z = matrix(class_df$Probability, nrow = length(class_df$Probability)), levels = 0.5, col = 'grey', drawlabels = F, lwd = 2)
-points(class_df, col = class_df$Correct)
-
-
-
-```
-
-##### Visualize model performance by style
-# Create a linear regression line for each style 
-```{r}
-ipa_df = class_df[class_df$Truth == 'IPA',]
-ipa_df$Correct = ifelse(ipa_df$Correct == TRUE, 1, 0)
-
-#ipa_df$Numeric = c(1)
-ipa_reg = lm(formula = Correct ~ ABV + IBU, data = ipa_df)
-
-
-ipa.abv = unique(ipa_df$ABV)
-ipa.ibu = unique(ipa_df$IBU)
-ipagrid <- with(ipa_df, expand.grid(ipa.abv, ipa.ibu))
-ipa_d = setNames(data.frame(grid), c('ABV', 'IBU'))
-ipa_values = predict(ipa_reg, newdata = ipa_d)
-```
-
-```{r}
-#ipa_reg <- matrix(ipa_values)
-                  #, nrow = length(unique(ipa_d$abv)), ncol = length(unique(ipa_d$ibu)))
-ipa_matrix = matrix(ipa_values, nrow = length(unique(ipa_d$abv)), ncol = length(unique(ipa_d$ibu)))
-
-# z = probability or Numeric
-ipa_model_plot <- plot_ly(ipa_model, x = ~ABV, y = ~IBU, z = ~Numeric, color = ~Correct, colors = 'Set1')
-ipa_model_plot <- ipa_model_plot %>% add_markers()
-ipa_model_plot <- ipa_model_plot %>% layout(title = 'Model Performance on IPAs', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'Probability')))
-ipa_model_plot <- add_trace(ipa_matrix, x = ~ABV, y = ~IBU, z = ~ipa_reg)
-#ipa_model_plot <- ipa_model_plot %>% add_surface(x = ~ABV, y = ~IBU, z = ~ipa_reg)
-ipa_model_plot
-
-```
-
-```{r}
-ale_model = class_df[class_df$Truth == 'Ale',]
-
-ale_model_plot <- plot_ly(ale_model, x = ~ABV, y = ~IBU, z = ~Probability, color = ~Correct, colors = 'Set1')
-ale_model_plot <- ale_model_plot %>% add_markers()
-ale_model_plot <- ale_model_plot %>% layout(title = 'Model Performance On Ales', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'Probability')))
-ale_model_plot
-```
-
-
-### Create trendline by creating a surface
-# fit model and plot the surface along with the model results
-```{r}
-m = lm(ABV ~ IBU + Numeric, data = class_df)
-
-abv = unique(class_df$ABV)
-ibu = unique(class_df$IBU)
-numeric = as.numeric(unique(class_df$Numeric))
-
-grid = with(class_df, expand.grid(abv, ibu, Numeric))
-d <- setNames(data.frame(grid), c('ABV', 'IBU', 'Numeric'))
-values = predict(m, newdata = d)
-
-# form matrix and plot with model performance
-m = matrix(values, nrow = length(unique(d$ABV)), ncol = length(unique(d$IBU)))
-numeric_matrix = as.matrix(class_df[, 7])
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~numeric_matrix, color = ~Correct, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Style', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'True Style')))
-# Used Numeric for z instead of true style here
-model_plot <- model_plot %>% add_surface(x = d$ABV, y = d$IBU, z = numeric_matrix, type = 'surface',
-                                       opacity = 1, colors = c('#d1d1d1', '#000000'))
-model_plot
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Create a linear model playground
-```{r}
-linear_model = lm(ABV ~ IBU , data = lm_train)
-summary(linear_model)
-```
-
-
-
-
-model_plot <- plot_ly(class_df, x = ~ABV, y = ~IBU, z = ~Truth, color = ~Correct, colors = 'Set1')
-model_plot <- model_plot %>% add_markers()
-model_plot <- model_plot %>% layout(title = 'Distribution of ABV and IBU By Style', scene = list(xaxis = list(title = 'ABV'),
-                                  yaxis = list(title = 'IBU'),
-                                  zaxis = list(title = 'True Style')))
-model_plot
-```
-
-
-
-
-fitted.results = predict(logistic_regression_model, newdata = subset(ipa_ale_test, select = c(7, 8)), type = 'response')
-fitted.results = ifelse(fitted.results > 0.5, 'IPA', 'Ale')
-
-misclass_error = mean(fitted.results != ipa_ale_test$Style)
-print(paste('Accuracy is ', 1 - misclass_error))
 

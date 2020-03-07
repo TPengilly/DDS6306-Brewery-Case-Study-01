@@ -321,7 +321,15 @@ state_maxABV # Colorado
 dataset$ABV[which.max(dataset$ABV)]
 state_maxIBU # Oregon
 dataset$IBU[which.max(dataset$IBU)]
+
+max_abv = dataset %>% group_by(State) %>% summarize(maxABV = max(ABV))
+max_abv = as.data.frame(max_abv)
+max_ibu = dataset %>% group_by(State) %>% summarize(maxIBU = max(IBU))
+max_ibu = as.data.frame(max_ibu)
+max_data = merge(max_abv, max_ibu, by = 'State')
 ```
+
+
 
 # This creates a bar chart for maximum ABV and IBU for each state.
 ```{r}
@@ -354,13 +362,6 @@ max_ibu %>% ggplot(aes(x = reorder(State, maxIBU, fun = median), y = maxIBU)) +
 
 # This code creates a heatmap for the max ABV and IBU for beer in each state.
 ```{r}
-# Find and display max values
-max_abv = dataset %>% group_by(State) %>% summarize(maxABV = max(ABV))
-max_abv = as.data.frame(max_abv)
-max_ibu = dataset %>% group_by(State) %>% summarize(maxIBU = max(IBU))
-max_ibu = as.data.frame(max_ibu)
-max_data = merge(max_abv, max_ibu, by = 'State')
-
 # Manipulate variable names to enable merging dataframes
 lookup = data.frame(abb = state.abb, State = state.name)
 colnames(max_data)[1] = "abb"
